@@ -178,7 +178,7 @@ dev.off()
 # this function the distribution of LFC estimate for all genes is used to shrink the log2FC estimates of gene with little information
 # or high dispersion toward more likely (lower LFC) estimates. (https://github.com/hbctraining/DGE_workshop_salmon/blob/master/lessons/05_DGE_DESeq2_analysis2.md)
 resultsNames(dds)
-# type = apeglm refers to approximate estimation for GLM coefficients which is the adaptive Student's t prior shrinkage estimator from the 'apeglm' pacakge
+# type = apeglm refers to approximate estimation for GLM coefficients which is the adaptive Student's t prior shrinkage estimator from the 'apeglm' package
 resLFC <- lfcShrink(dds, coef = "dexamethasone_treated_vs_untreated", type = "apeglm")
 resLFC
 
@@ -187,7 +187,7 @@ png(file='MA_plot_after_LFC.png')
 plotMA(resLFC, main = "MA plot of airway data set after shrinkage")
 dev.off()
 
-# There is also possibility to use other shrinkage estimators like ashr from ashr package or normal is the original DESeq2 shrinkage estiamtor, an adaptive normal distribution as prior
+# There is also possibility to use other shrinkage estimators like ashr from ashr package or normal is the original DESeq2 shrinkage estimator, an adaptive normal distribution as prior
 
 # Plot counts - provides  the information of the counts of reads for a single gene across the analysed groups:
 # for this plot was provided gen with the smallest adj. p_value from the DESeq results
@@ -195,10 +195,51 @@ plotCounts(dds, gene = which.min(res$padj), intgroup = "dexamethasone")
 
 # Creating heatmap of the count matrix:
 
-library("pheatmap")
-library(ReportingTools)
+# In order to make the visualization with some grouping technics (like clustering) we should consider the transformations of raw data.
+# Because some counts values for gene can be zero in some conditions (and non-zero with others)
+# The point of such transformation is to remove the dependence of the variance on the mean, to be precise the examples with the high variance of the logarithm of count data when the mean is low. 
+# For such a purpose we can use VST (Variance stabilizing transformations) or rlog (regularized logarithm).
+# Both VST and rlog use the use the experiment-wide trend of variance over mean, in order to transform data to remove the experiment-wide trend. 
+# It's also good to mention that both functions have the Blind dispersion estimator (on default TRUE). When this argument equals true function will re-estimate the dispersion using only an intercept.
+# This setting should be used in order to compare samples in manner wholly unbiased by the information about experimental groups. 
+# We will turn of this setting because our differences in counts are explainable by the experimental design and we want to transform the data for downstream analysis. 
+# Worth mention is fact that the rlog algorithm works slower for bigger samples.
 
+# transformation with VST:
+vsd <- vst(dds, blind = FALSE)
+head(counts_data)
+
+# After transformation
+head(assay(vsd), 3)
+
+library("pheatmap")
+
+# preparing data for heatmap:
+
+# selecting top 20 rows
 select <- order(rowMeans(counts(dds, normalized=TRUE)), decreasing = TRUE)[1:20]
 
 df <- as.data.frame(colData(dds)[,c("cellLine", "dexamethasone")])
 
+png(filename = "heat_map.png")
+pheatmap(assay(vsd)[select,], cluster_rows = FALSE, show_rownames = FALSE,
+         cluster_cols = FALSE, annotation = df)
+dev.off()
+
+# Sample to sample distance matrix with clustering
+
+sampleDistance <- dist(t(assay(vsd)))
+
+library("RColorBrewer")
+
+sampleDistMatrix <- as.matrix(sampleDistance)
+rownames(sampleDistMatrix) <- paste(vsd$dexamethasone, vsd$cellLine, sep = "-")
+colnames(sampleDistMatrix) <- NULL
+colors <- colorRampPalette(rev(brewer.pal(9, 'Greens')) )(255)
+
+png(filename = "sample_to_sample_dists.png")
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows = sampleDistance,
+         clustering_distance_cols = sampleDistance,
+         color = colors)
+dev.off()
