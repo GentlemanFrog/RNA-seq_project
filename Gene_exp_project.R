@@ -1,5 +1,6 @@
 
 # RNA-seq project to perform gene expression analysis with the DESeq2 library
+# Project made according to this workflow: http://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#standard-workflow
 
 # The data comes from the paper:
 # Human Airway Smooth Muscle Transcriptome Changes in Response to Asthma
@@ -15,7 +16,7 @@
 
 # 3. The aim of the study: It is to understand the transcriptional changes occurring due to the treatment with used drug
 
-# Data download and csv preperation:
+# Data download and csv preparation:
 # To download library needed for this experiment the following command must be used:
 # BiocManager::install("airway")
 
@@ -166,6 +167,38 @@ summary(res_p_0.01)
 # triangles tell the direction of the fold change. In this type of plots we want to see genes in the upper right 
 # part of the plot, which means that these will have high mean of normalized counts and high log2FC values
 # which will make these genes candidates to be further look into. 
-plotMA(res)
+png(file='MA_plot.png')
+plotMA(res, ylim=c(-2,2), main = "MA plot of airway data set")
+dev.off()
 
+# Log fold change shrinkage fro visualization and ranking:
+
+# We performing this step to make more accurate log2FC estimates. This function allows for the shrinkage of the log2FC estimates
+# toward zero when the information for a gene is low, which include situations like: low counts, high dispersion values. After usage of 
+# this function the distribution of LFC estimate for all genes is used to shrink the log2FC estimates of gene with little information
+# or high dispersion toward more likely (lower LFC) estimates. (https://github.com/hbctraining/DGE_workshop_salmon/blob/master/lessons/05_DGE_DESeq2_analysis2.md)
+resultsNames(dds)
+# type = apeglm refers to approximate estimation for GLM coefficients which is the adaptive Student's t prior shrinkage estimator from the 'apeglm' pacakge
+resLFC <- lfcShrink(dds, coef = "dexamethasone_treated_vs_untreated", type = "apeglm")
+resLFC
+
+# Results after shrinkage:
+png(file='MA_plot_after_LFC.png')
+plotMA(resLFC, main = "MA plot of airway data set after shrinkage")
+dev.off()
+
+# There is also possibility to use other shrinkage estimators like ashr from ashr package or normal is the original DESeq2 shrinkage estiamtor, an adaptive normal distribution as prior
+
+# Plot counts - provides  the information of the counts of reads for a single gene across the analysed groups:
+# for this plot was provided gen with the smallest adj. p_value from the DESeq results
+plotCounts(dds, gene = which.min(res$padj), intgroup = "dexamethasone")
+
+# Creating heatmap of the count matrix:
+
+library("pheatmap")
+library(ReportingTools)
+
+select <- order(rowMeans(counts(dds, normalized=TRUE)), decreasing = TRUE)[1:20]
+
+df <- as.data.frame(colData(dds)[,c("cellLine", "dexamethasone")])
 
