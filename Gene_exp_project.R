@@ -193,6 +193,20 @@ dev.off()
 # for this plot was provided gen with the smallest adj. p_value from the DESeq results
 plotCounts(dds, gene = which.min(res$padj), intgroup = "dexamethasone")
 
+# Exporting results to csv:
+
+# Saving results ordered by p_pvalue:
+resOrdered <- res[order(res$pvalue),]
+write.csv(as.data.frame(resOrdered), file='deseq_results.csv')
+
+# Also we are able to save the results on which we provide some threshold like 
+# precise adjusted p_value < 0.1
+
+res_adj_p <- subset(resOrdered, padj < 0.1)
+res_adj_p
+# saving filtered results:
+write.csv(as.data.frame(res_adj_p), file='adj_p_results.csv')
+
 # Creating heatmap of the count matrix:
 
 # In order to make the visualization with some grouping technics (like clustering) we should consider the transformations of raw data.
@@ -228,6 +242,8 @@ dev.off()
 
 # Sample to sample distance matrix with clustering
 
+# This type of heat map give us an overview of the similarities and differences between groups of samples
+# Also the hierarchical clustering is provided based on the sample to sample distance
 sampleDistance <- dist(t(assay(vsd)))
 
 library("RColorBrewer")
@@ -243,3 +259,32 @@ pheatmap(sampleDistMatrix,
          clustering_distance_cols = sampleDistance,
          color = colors)
 dev.off()
+
+# PCA components plot - we can make plot where we show our different samples group on 2D or 3D matrix
+# This type of plot is useful for visualizing the overall effect of experiment covariants and batch effect which
+# can occur when non-biological factors in experiment causes a changes in the data produced by experiment. 
+
+png(filename = "pca_plot.png")
+plotPCA(vsd, intgroup = c("cellLine", "dexamethasone"))
+dev.off()
+
+
+# The PCA plot can be customize with the ggplot function:
+# For the customization we have to remember about the argument returnData of plotPCA()
+# this argument makes function only return data frame of 1 and 2 component from PCA with the 
+# inter-groups covariates for custom plotting. 
+
+pcaData <- plotPCA(vsd, intgroup = c("cellLine", "dexamethasone"), returnData=TRUE)
+
+# variable for showing the percentage of variance: (attr function catching only specific attribute of object)
+percentVar <- round(100*attr(pcaData, "percentVar"))
+
+# plotting our custom PCA plot with ggplot:
+ggplot(pcaData, aes(PC1, PC2, color=dexamethasone, shape=cellLine))+
+  geom_point(size=3) + 
+  xlab(paste0("PC1: ", percentVar[1],"% variance"))+
+  ylab(paste0("PC2: ", percentVar[2], "% variance"))+
+  coord_fixed()
+
+
+
