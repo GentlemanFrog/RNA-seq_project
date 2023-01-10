@@ -286,5 +286,5 @@ ggplot(pcaData, aes(PC1, PC2, color=dexamethasone, shape=cellLine))+
   ylab(paste0("PC2: ", percentVar[2], "% variance"))+
   coord_fixed()
 
-
+ggsave(filename = "pca_custom.png", plot = last_plot(), device = "png")
 
