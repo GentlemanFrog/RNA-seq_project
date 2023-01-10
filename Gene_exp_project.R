@@ -167,7 +167,8 @@ summary(res_p_0.01)
 # triangles tell the direction of the fold change. In this type of plots we want to see genes in the upper right 
 # part of the plot, which means that these will have high mean of normalized counts and high log2FC values
 # which will make these genes candidates to be further look into. 
-png(file='MA_plot.png')
+
+jpeg('MA_plot.jpg')
 plotMA(res, ylim=c(-2,2), main = "MA plot of airway data set")
 dev.off()
 
@@ -183,7 +184,8 @@ resLFC <- lfcShrink(dds, coef = "dexamethasone_treated_vs_untreated", type = "ap
 resLFC
 
 # Results after shrinkage:
-png(file='MA_plot_after_LFC.png')
+
+jpeg('MA_plot_after_shrinkage.jpg')
 plotMA(resLFC, main = "MA plot of airway data set after shrinkage")
 dev.off()
 
@@ -191,7 +193,10 @@ dev.off()
 
 # Plot counts - provides  the information of the counts of reads for a single gene across the analysed groups:
 # for this plot was provided gen with the smallest adj. p_value from the DESeq results
+
+jpeg('count_plot.jpg')
 plotCounts(dds, gene = which.min(res$padj), intgroup = "dexamethasone")
+dev.off()
 
 # Exporting results to csv:
 
@@ -230,12 +235,12 @@ library("pheatmap")
 
 # preparing data for heatmap:
 
-# selecting top 20 rows
+# selecting top 20 rows (top 20 genes)
 select <- order(rowMeans(counts(dds, normalized=TRUE)), decreasing = TRUE)[1:20]
 
 df <- as.data.frame(colData(dds)[,c("cellLine", "dexamethasone")])
 
-png(filename = "heat_map.png")
+jpeg('heat_map_top_20.jpg')
 pheatmap(assay(vsd)[select,], cluster_rows = FALSE, show_rownames = FALSE,
          cluster_cols = FALSE, annotation = df)
 dev.off()
@@ -253,7 +258,7 @@ rownames(sampleDistMatrix) <- paste(vsd$dexamethasone, vsd$cellLine, sep = "-")
 colnames(sampleDistMatrix) <- NULL
 colors <- colorRampPalette(rev(brewer.pal(9, 'Greens')) )(255)
 
-png(filename = "sample_to_sample_dists.png")
+jpeg('heat_map_with_sample_to_sample_distance.jpg')
 pheatmap(sampleDistMatrix,
          clustering_distance_rows = sampleDistance,
          clustering_distance_cols = sampleDistance,
@@ -264,10 +269,9 @@ dev.off()
 # This type of plot is useful for visualizing the overall effect of experiment covariants and batch effect which
 # can occur when non-biological factors in experiment causes a changes in the data produced by experiment. 
 
-png(filename = "pca_plot.png")
+jpeg('pca_plot.jpg')
 plotPCA(vsd, intgroup = c("cellLine", "dexamethasone"))
 dev.off()
-
 
 # The PCA plot can be customize with the ggplot function:
 # For the customization we have to remember about the argument returnData of plotPCA()
