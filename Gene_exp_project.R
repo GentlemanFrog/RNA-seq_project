@@ -292,3 +292,67 @@ ggplot(pcaData, aes(PC1, PC2, color=dexamethasone, shape=cellLine))+
 
 ggsave(filename = "pca_custom.png", plot = last_plot(), device = "png")
 
+
+
+# Visualization with ViDGER:
+
+# Information: https://bioconductor.org/packages/release/bioc/html/vidger.html
+
+library(vidger)
+
+
+# Creating a box plot:
+
+# Box plots give information on how the data are distributed. In this situation,
+# vsBoxPlot() can be used to determine the distribution of FPKAM or CPM values
+
+jpeg('box_plot_vidger.jpg')
+vsBoxPlot(
+  data = dds, d.factor = 'dexamethasone', type = 'deseq', 
+  title = TRUE, legend = TRUE, grid = TRUE
+)
+dev.off()
+
+# This pacakge also gives an option to change the showcase of data distribution
+# Already there are 6 diffrent variants of box plots which can be showed with the 
+# aes parameter: box (standard box plot), violin (violin plot), boxdot (boxplot 
+# with dot plot overlay), viodot (violoin plot with dot plot overlay), viosumm (
+# violin plot with summary stats overlay), notch (box plot with notch)
+
+# multiple plots options:
+
+p1 <- vsBoxPlot(
+  data = dds, d.factor = 'dexamethasone', type = 'deseq', 
+  title = TRUE, legend = TRUE, grid = TRUE, aes = "box"
+)
+
+p2 <- vsBoxPlot(
+  data = dds, d.factor = 'dexamethasone', type = 'deseq', 
+  title = TRUE, legend = TRUE, grid = TRUE, aes = "violin"
+)
+
+p3 <- vsBoxPlot(
+  data = dds, d.factor = 'dexamethasone', type = 'deseq', 
+  title = TRUE, legend = TRUE, grid = TRUE, aes = "boxdot"
+)
+
+p4 <- vsBoxPlot(
+  data = dds, d.factor = 'dexamethasone', type = 'deseq', 
+  title = TRUE, legend = TRUE, grid = TRUE, aes = "viodot"
+)
+
+p5 <- vsBoxPlot(
+  data = dds, d.factor = 'dexamethasone', type = 'deseq', 
+  title = TRUE, legend = TRUE, grid = TRUE, aes = "viosumm"
+)
+
+p6 <- vsBoxPlot(
+  data = dds, d.factor = 'dexamethasone', type = 'deseq', 
+  title = TRUE, legend = TRUE, grid = TRUE, aes = "notch"
+)
+
+# Making a scatter plot: Depending on the type of analysis used, this plot enables
+# visual comparison of the log10 values of the FPKM or CPM measurements of two treatments.
+
+
+
