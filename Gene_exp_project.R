@@ -354,5 +354,136 @@ p6 <- vsBoxPlot(
 # Making a scatter plot: Depending on the type of analysis used, this plot enables
 # visual comparison of the log10 values of the FPKM or CPM measurements of two treatments.
 
+jpeg('scatter_plot_vidger.jpg')
+vsScatterPlot(
+  x = 'treated', y = 'untreated', 
+  data = dds , type = 'deseq', d.factor = 'dexamethasone', 
+  title = TRUE, grid = TRUE
+)
+dev.off()
 
+# Scatter matrix: This example will examine the vsScatterMatrix function, which is 
+# an extension of the vsScatterPlot() function. With the help of extra information,
+# this function will produce a matrix of all potential treatment comparisons within an experiment.
+
+png('scatter_matrix_vidger.png')
+vsScatterMatrix(
+  data = dds, d.factor = 'dexamethasone', type = 'deseq',
+  comp = NULL, title = TRUE, grid = TRUE, man.title = NULL
+)
+dev.off()
+
+# Creating differential gene expression matrices: 
+# The number of differentially expressed genes (DEGs) at a specific adjusted p-value
+# (padj =) for each experimental treatment level can be seen by using the vsDEGMatrix() tool.
+# A greater number of DEGs are correlated with a greater color intensity.
+
+png('differential_gene_expression_matrix.png')
+vsDEGMatrix(
+  data = dds, padj = 0.05, d.factor = 'dexamethasone', 
+  type = 'deseq', title = TRUE, legend = TRUE, grid = TRUE
+)
+dev.off()
+
+# Creating MA plots:
+# vsMAPlot() plots the logarithmic fold changes of count data versus mean counts 
+# to display the variance between two samples in terms of gene expression values. 
+
+png("ma_plot_vidger_dds.png")
+vsMAPlot(
+  x = 'treated', y = 'untreated', 
+  data = dds, d.factor = 'dexamethasone', type = 'deseq', 
+  padj = 0.05, y.lim = NULL, lfc = NULL, title = TRUE, 
+  legend = TRUE, grid = TRUE
+)
+dev.off()
+
+# Creating MA plot matricies:
+# vsMAMatrix() will generate visualizations for each comparison in your data set,
+# much like a scatter plot matrix. 
+
+png("ma_plot_matrices_vidger.png")
+vsMAMatrix(
+  data = dds, d.factor = 'dexamethasone', type = 'deseq', 
+  padj = 0.05, y.lim = NULL, lfc = 1, title = TRUE, 
+  grid = TRUE, counts = TRUE, data.return = FALSE
+)
+dev.off()
+
+# Creating Vulcano plots:
+# The subsequent visualizations will concentrate on how to show how gene expression
+# differs between two or more treatments.
+# A volcano plot compares the -log10 of the estimated p-values (y-axis) to the log2 
+# changes to show the variation in gene expression between two samples (x-axis).
+# The vsVolcano() method allows you to see these charts in visual form. 
+
+png("vulcano_plot_vidger.png")
+vsVolcano(
+  x = 'treated', y = 'untreated', 
+  data = dds, d.factor = 'dexamethasone', type = 'deseq', 
+  padj = 0.05, x.lim = NULL, lfc = NULL, title = TRUE, 
+  legend = TRUE, grid = TRUE, data.return = FALSE
+)
+dev.off()
+
+# Creating vulacano matrices:
+
+png("vulcano_matrices_vidger.png")
+vsVolcanoMatrix(
+  data = dds, d.factor = 'dexamethasone', type = 'deseq', 
+  padj = 0.05, x.lim = NULL, lfc = NULL, title = TRUE, 
+  legend = TRUE, grid = TRUE, counts = TRUE
+)
+dev.off()
+
+
+# After visualization and getting the results of for example 20 genes with the lowest
+# adjusted p_value, its good to get thei GO (Gene ontology).It is a formal representation
+# of a body of knowledge within a certain area (is called an ontology).
+# In most cases, ontologies are made up of a number of classes (or words, or concepts) 
+# and the relations that exist between them.
+# Three parts of our understanding of the biological domain—molecular function,
+# cellular component, and biological process—are described by the Gene Ontology (GO).
+
+# In a GO annotation example, the molecular function oxidoreductase activity, 
+# the biological process oxidative phosphorylation, and the cellular component 
+# mitochondrial intermembrane space can all be used to describe human "cytochrome c."
+
+# The GO vocabulary comprises terminology that apply to prokaryotes, eukaryotes,
+# single-celled creatures, and multicellular ones. It is intended to be species-neutral. 
+# http://geneontology.org/docs/ontology-documentation/
+
+# To perform such task we will need the 3 pacages: clusterProfiler (this pacage will perform actual analysis)
+# , AnnotationDbi (will run the backgroudn of all process), org.Hs.eg.db (and if 
+# genes we try to get annotation come frome Homo sapiens tissues, we need the Hs - Homo sapiens data base,
+# if they come from mouse for example insted of Hs we should write Mm - Mus musculus)
+
+library(clusterProfiler)
+library(org.Hs.eg.db)
+library(AnnotationDbi)
+
+res_adj_p[res_adj_p$log2FoldChange > 0.5,]
+
+# To perform analysis we just need rownames which are gene IDs from Ensemble
+
+genes_to_ontology <- rownames(res_adj_p[res_adj_p$log2FoldChange > 0.5,])
+genes_to_ontology
+
+# Now we perform the actual Go command from clusterProfiler:
+
+# In first argumnt we pass our list of genes, then we specify the database, we specifye the 
+# type of our IDs and on the last argument we pass what type of gene ontology we want to get
+# BP refers to Biological process
+GO_results <- enrichGO(gene=gene_to_ontology, OrgDb = "org.Hs.eg.db",
+                       keyType = "ENSEMBL", ont = "BP")
+
+# After finishing of this commend we can convert the results to dataframe
+
+gene_ontology_res <- as.data.frame(GO_results)
+
+# We can also plot this data: (We will plot top 20 of the geese referring to p_value, and count to all genes)
+fit <- plot(barplot(GO_results, showCategory = 20))
+png("gene_ontology.png", res = 250, width = 1200, height = 1800)
+print(fit)
+dev.off()
 
