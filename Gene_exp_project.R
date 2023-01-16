@@ -84,6 +84,7 @@ all(colnames(counts_data) == rownames(column_data))
 # that we are checking and information about it being treated with drug or not, design is a formula which express
 # how the counts for each gene depend on the variables in colData, so for our example we want to check the differences
 # between treated and untreated samples so design refers to the dexamethasone column
+
 dds <- DESeqDataSetFromMatrix(countData = counts_data,
                        colData = column_data,
                        design = ~ dexamethasone)
@@ -106,6 +107,7 @@ dds
 # In our example we have 2 levels: treated and untreated. So we have to tell the DESeq that we want to use the
 # untreated samples as reference level, to compare treated sample with the untreated. 
 
+dds$dexamethasone
 dds$dexamethasone <- relevel(dds$dexamethasone, ref = "untreated")
 dds$dexamethasone
 
